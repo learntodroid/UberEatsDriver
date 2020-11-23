@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/nav_graph"
+    app:startDestination="@id/loginSignUpFragment">
+
+    <fragment
+        android:id="@+id/driverFragment"
+        android:name="com.learntodroid.ubereatsdriver.driver.DriverFragment"
+        android:label="DriverFragment" />
+    <fragment
+        android:id="@+id/loginSignUpFragment"
+        android:name="com.learntodroid.ubereatsdriver.loginsignup.LoginSignUpFragment"
+        android:label="LoginSignUpFragment" >
+        <action
+            android:id="@+id/action_loginSignUpFragment_to_driverFragment"
+            app:destination="@id/driverFragment" />
+    </fragment>
+</navigation>
