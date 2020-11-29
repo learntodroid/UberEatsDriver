@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/fragment_restaurantcollection_mapview"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        />
+
+    <Button
+        android:id="@+id/fragment_restaurantcollection_getlocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Get Location"
+        android:layout_gravity="center_horizontal"/>
+
+    <TextView
+        android:id="@+id/fragment_restaurantcollection_currentlocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="Current Location: "/>
+
+
+    <Button
+        android:id="@+id/fragment_restaurantcollection_stoplocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Stop Location"
+        android:layout_gravity="center_horizontal"/>
+
+    <Button
+        android:id="@+id/fragment_restaurantcollection_calculatedirections"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Calculate Directions"
+        android:layout_gravity="center_horizontal"/>
+
+</LinearLayout>
