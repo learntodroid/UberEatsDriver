@@ -1,4 +1,4 @@
-package com.learntodroid.ubereatsdriver.restaurantcollection;
+package com.learntodroid.ubereatsdriver.customerdelivery;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -20,9 +20,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.Navigation;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationAvailability;
@@ -41,38 +38,32 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.maps.GeoApiContext;
 import com.google.maps.internal.PolylineEncoding;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.DirectionsRoute;
 import com.learntodroid.ubereatsdriver.R;
-import com.learntodroid.ubereatsdriver.orderslist.CartRecyclerAdapter;
+import com.learntodroid.ubereatsdriver.sharedmodel.Address;
 import com.learntodroid.ubereatsdriver.sharedmodel.Order;
-import com.learntodroid.ubereatsdriver.sharedmodel.Restaurant;
 
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RestaurantCollectionFragment extends Fragment implements OnMapReadyCallback {
+public class CustomerDeliveryFragment extends Fragment implements OnMapReadyCallback {
     private static final int LOCATION_PERMISSIONS_REQUEST = 2000;
-    private static final int UPDATE_INTERVAL = 5000;
+    private static final int UPDATE_INTERVAL = 10000;
 
-    private RestaurantCollectionViewModel restaurantCollectionViewModel;
+    private CustomerDeliveryViewModel customerDeliveryViewModel;
+
     private MapView mapView;
-    private Marker driverMarker, restrauntMarker;
-    private Polyline routePolyline;
-    private GoogleMap googleMap;
     private GeoApiContext geoApiContext;
+    private GoogleMap googleMap;
+    private Marker customerMarker, driverMarker;
+    private Polyline routePolyline;
 
     private TextView currentLocationTextView;
-
-    private TextView restaurantTitleTextView, restaurantAddressTextView;
-    private TextView orderStatusTextView, orderDateTimeTextView, orderIdTextView, orderUserIdTextView, orderTotalPrice;
-    private RecyclerView orderCartRecyclerView;
-    private CartRecyclerAdapter cartRecyclerAdapter;
 
     private FusedLocationProviderClient locationProviderClient;
     private LocationRequest locationRequest;
@@ -82,66 +73,23 @@ public class RestaurantCollectionFragment extends Fragment implements OnMapReady
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        restaurantCollectionViewModel = new ViewModelProvider(this).get(RestaurantCollectionViewModel.class);
+        customerDeliveryViewModel = new ViewModelProvider(this).get(CustomerDeliveryViewModel.class);
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_restaurantcollection, container, false);
+        View view = inflater.inflate(R.layout.fragment_customerdelivery, container, false);
 
-        currentLocationTextView = view.findViewById(R.id.fragment_restaurantcollection_currentlocation);
+        mapView = view.findViewById(R.id.fragment_customerdelivery_mapview);
 
-        restaurantTitleTextView = view.findViewById(R.id.fragment_restaurantcollection_restauranttitle);
-        restaurantAddressTextView = view.findViewById(R.id.fragment_restaurantcollection_restaurantaddress);
-
-        orderStatusTextView = view.findViewById(R.id.fragment_restaurantcollection_orderstatus);
-        orderDateTimeTextView = view.findViewById(R.id.fragment_restaurantcollection_orderdatetime);
-        orderIdTextView = view.findViewById(R.id.fragment_restaurantcollection_orderid);
-        orderUserIdTextView = view.findViewById(R.id.fragment_restaurantcollection_orderuserid);
-        orderTotalPrice = view.findViewById(R.id.fragment_restaurantcollection_ordertotalprice);
-
-        mapView = view.findViewById(R.id.fragment_restaurantcollection_mapview);
-
-        orderCartRecyclerView = view.findViewById(R.id.fragment_restaurantcollection_orderitems);
-        cartRecyclerAdapter = new CartRecyclerAdapter();
-        orderCartRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        orderCartRecyclerView.setAdapter(cartRecyclerAdapter);
+        currentLocationTextView = view.findViewById(R.id.fragment_customerdelivery_currentlocation);
 
         setupLocationServices();
         setupButtons(view);
         setupMap(savedInstanceState);
 
-        restaurantCollectionViewModel.getSelectedOrderLiveData().observe(getViewLifecycleOwner(), new Observer<Order>() {
-            @Override
-            public void onChanged(Order order) {
-                if (order != null) {
-                    Toast.makeText(getContext(), order.getRestaurant().getAddress(), Toast.LENGTH_SHORT).show();
-
-                    restaurantTitleTextView.setText("Restaurant: " + order.getRestaurant().getTitle());
-                    restaurantAddressTextView.setText("Address: " + order.getRestaurant().getAddress());
-
-                    orderStatusTextView.setText(String.format("Order %s", order.getStatus().toLowerCase()));
-                    orderDateTimeTextView.setText(String.format("Order Placed: %s", "XX/XX/XXXX XX:XX XX"));
-                    orderIdTextView.setText(String.format("Order Id: %s", "ORDER_ID"));
-                    orderUserIdTextView.setText(String.format("User Id: %s", order.getAccount().getUserId()));
-                    orderTotalPrice.setText(String.format("Total: %s", NumberFormat.getCurrencyInstance().format(order.getCart().calculatePrices().get(3).getPrice())));
-
-                    cartRecyclerAdapter.setCartItems(order.getCart().getCartItems());
-
-                    view.findViewById(R.id.fragment_restaurantcollection_ordercollected).setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            restaurantCollectionViewModel.updateOrderStatus(order, "Delivering");
-                            stopLocationUpdates();
-                            Navigation.findNavController(view).navigate(R.id.action_restaurantCollectionFragment_to_customerDeliveryFragment);
-                        }
-                    });
-                }
-            }
-        });
-
-        restaurantCollectionViewModel.getRestaurantDriverLocationLiveData().observe(getViewLifecycleOwner(), new Observer<Location>() {
+        customerDeliveryViewModel.getDriverLocationLiveData().observe(getViewLifecycleOwner(), new Observer<Location>() {
             @Override
             public void onChanged(Location location) {
                 if (location != null) {
@@ -163,17 +111,17 @@ public class RestaurantCollectionFragment extends Fragment implements OnMapReady
             }
         });
 
-        restaurantCollectionViewModel.getRestaurantDirectionsResultLiveData().observe(getViewLifecycleOwner(), new Observer<DirectionsResult>() {
+        customerDeliveryViewModel.getCustomerDirectionsResultLiveData().observe(getViewLifecycleOwner(), new Observer<DirectionsResult>() {
             @Override
             public void onChanged(DirectionsResult result) {
                 if (result != null) {
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
                         public void run() {
-                            Log.d(RestaurantCollectionFragment.class.getSimpleName(), "run: result routes: " + result.routes.length);
+                            Log.d(CustomerDeliveryFragment.class.getSimpleName(), "run: result routes: " + result.routes.length);
 
                             for(DirectionsRoute route: result.routes){
-                                Log.d(RestaurantCollectionFragment.class.getSimpleName(), "run: leg: " + route.legs[0].toString());
+                                Log.d(CustomerDeliveryFragment.class.getSimpleName(), "run: leg: " + route.legs[0].toString());
                                 List<com.google.maps.model.LatLng> decodedPath = PolylineEncoding.decode(route.overviewPolyline.getEncodedPath());
 
                                 List<LatLng> newDecodedPath = new ArrayList<>();
@@ -207,37 +155,6 @@ public class RestaurantCollectionFragment extends Fragment implements OnMapReady
         return view;
     }
 
-    public void setupButtons(View view) {
-        view.findViewById(R.id.fragment_restaurantcollection_getlocation).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startLocationUpdates();
-            }
-        });
-
-        view.findViewById(R.id.fragment_restaurantcollection_stoplocation).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                stopLocationUpdates();
-            }
-        });
-
-        view.findViewById(R.id.fragment_restaurantcollection_calculatedirections).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Order order = restaurantCollectionViewModel.getSelectedOrderLiveData().getValue();
-                Restaurant restaurant = order.getRestaurant();
-
-                Location currentLocation = restaurantCollectionViewModel.getRestaurantDriverLocationLiveData().getValue();
-
-                com.google.maps.model.LatLng start = new com.google.maps.model.LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-                com.google.maps.model.LatLng end = new com.google.maps.model.LatLng(restaurant.getLatitude(), restaurant.getLongitude());
-
-                restaurantCollectionViewModel.calculateRestaurantDirections(geoApiContext, start, end);
-            }
-        });
-    }
-
     public void setupMap(Bundle savedInstanceState) {
         Bundle mapViewBundle = null;
         if (savedInstanceState != null) {
@@ -252,18 +169,35 @@ public class RestaurantCollectionFragment extends Fragment implements OnMapReady
 
     }
 
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        Order order = restaurantCollectionViewModel.getSelectedOrderLiveData().getValue();
-        Restaurant restaurant = order.getRestaurant();
+    public void setupButtons(View view) {
+        view.findViewById(R.id.fragment_customerdelivery_getlocation).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startLocationUpdates();
+            }
+        });
 
-        LatLng restaurantPosition = new LatLng(restaurant.getLatitude(), restaurant.getLongitude());
+        view.findViewById(R.id.fragment_customerdeliveryn_stoplocation).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                stopLocationUpdates();
+            }
+        });
 
-        restrauntMarker = googleMap.addMarker(new MarkerOptions().position(restaurantPosition).title(restaurant.getTitle()));
+        view.findViewById(R.id.fragment_customerdelivery_calculatedirections).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Order order = customerDeliveryViewModel.getSelectedOrderLiveData().getValue();
+                Address customerAddress = order.getAccount().getAddresses().get(0);
 
-        googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(restaurantPosition, 15f)));
+                Location currentLocation = customerDeliveryViewModel.getDriverLocationLiveData().getValue();
 
-        this.googleMap = googleMap;
+                com.google.maps.model.LatLng start = new com.google.maps.model.LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                com.google.maps.model.LatLng end = new com.google.maps.model.LatLng(customerAddress.getLatitude(), customerAddress.getLongitude());
+
+                customerDeliveryViewModel.calculateCustomerDirections(geoApiContext, start, end);
+            }
+        });
     }
 
     public void setupLocationServices() {
@@ -276,17 +210,17 @@ public class RestaurantCollectionFragment extends Fragment implements OnMapReady
             public void onLocationAvailability(LocationAvailability locationAvailability) {
                 super.onLocationAvailability(locationAvailability);
                 if (locationAvailability.isLocationAvailable()) {
-                    Log.i(RestaurantCollectionFragment.class.getSimpleName(),"Location isLocationAvailable");
+                    Log.i(CustomerDeliveryFragment.class.getSimpleName(),"Location isLocationAvailable");
                 } else {
-                    Log.i(RestaurantCollectionFragment.class.getSimpleName(),"Location is unavailable");
+                    Log.i(CustomerDeliveryFragment.class.getSimpleName(),"Location is unavailable");
                 }
             }
 
             @Override
             public void onLocationResult(LocationResult locationResult) {
                 super.onLocationResult(locationResult);
-                Log.i(RestaurantCollectionFragment.class.getSimpleName(),"Location onLocationResult");
-                restaurantCollectionViewModel.updateRestaurantDriverLocation(locationResult.getLastLocation());
+                Log.i(CustomerDeliveryFragment.class.getSimpleName(),"Location onLocationResult");
+                customerDeliveryViewModel.updateCustomerDriverLocation(locationResult.getLastLocation());
             }
         };
     }
@@ -297,14 +231,14 @@ public class RestaurantCollectionFragment extends Fragment implements OnMapReady
             locationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
                 @Override
                 public void onSuccess(Location location) {
-                    restaurantCollectionViewModel.updateRestaurantDriverLocation(location);
+                    customerDeliveryViewModel.updateCustomerDriverLocation(location);
                 }
             });
 
             locationProviderClient.getLastLocation().addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception e) {
-                    Log.i(RestaurantCollectionFragment.class.getSimpleName(), "Exception while getting the location: "+e.getMessage());
+                    Log.i(CustomerDeliveryFragment.class.getSimpleName(), "Exception while getting the location: "+e.getMessage());
                 }
             });
         } else {
@@ -332,6 +266,21 @@ public class RestaurantCollectionFragment extends Fragment implements OnMapReady
                 Toast.makeText(getContext(), "Location permission denied", Toast.LENGTH_LONG).show();
             }
         }
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        Order order = customerDeliveryViewModel.getSelectedOrderLiveData().getValue();
+
+        Address customerAddress = order.getAccount().getAddresses().get(0);
+
+        LatLng customerAddressPosition = new LatLng(customerAddress.getLatitude(), customerAddress.getLongitude());
+
+        customerMarker = googleMap.addMarker(new MarkerOptions().position(customerAddressPosition).title(customerAddress.getAddress()));
+
+        googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(customerAddressPosition, 15f)));
+
+        this.googleMap = googleMap;
     }
 
     @Override

@@ -26,5 +26,13 @@
     <fragment
         android:id="@+id/restaurantCollectionFragment"
         android:name="com.learntodroid.ubereatsdriver.restaurantcollection.RestaurantCollectionFragment"
-        android:label="RestaurantCollectionFragment" />
+        android:label="RestaurantCollectionFragment" >
+        <action
+            android:id="@+id/action_restaurantCollectionFragment_to_customerDeliveryFragment"
+            app:destination="@id/customerDeliveryFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/customerDeliveryFragment"
+        android:name="com.learntodroid.ubereatsdriver.customerdelivery.CustomerDeliveryFragment"
+        android:label="CustomerDeliveryFragment" />
 </navigation>

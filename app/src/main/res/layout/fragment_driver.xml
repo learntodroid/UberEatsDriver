@@ -4,6 +4,12 @@
     android:layout_height="match_parent">
 
     <Button
+        android:id="@+id/fragment_driver_createDriver"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Create Driver"/>
+
+    <Button
         android:id="@+id/fragment_driver_acceptingdeliveries"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
