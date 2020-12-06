@@ -74,8 +74,9 @@ public class OrdersRecyclerAdapter extends RecyclerView.Adapter<OrdersRecyclerAd
 
         public void bind(final Order order) {
             orderStatusTextView.setText(String.format("Order %s", order.getStatus().toLowerCase()));
-            userIdTextView.setText(order.getAccount().getUserId());
+            userIdTextView.setText(String.format("User Id: %s", order.getAccount().getUserId()));
             totalPriceTextView.setText(String.format("Total: %s", NumberFormat.getCurrencyInstance().format(order.getCart().calculatePrices().get(3).getPrice())));
+            orderIdTextView.setText(String.format("Order Id: %s", order.getDocumentId()));
 
             cartRecyclerAdapter.setCartItems(order.getCart().getCartItems());
 

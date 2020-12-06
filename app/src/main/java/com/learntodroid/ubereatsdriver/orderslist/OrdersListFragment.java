@@ -59,8 +59,7 @@ public class OrdersListFragment extends Fragment implements OnOrderProgressionCl
 
     @Override
     public void onOrderReserved(Order order) {
-        //todo
-        ordersListViewModel.setSelectedOrder(order);
+        ordersListViewModel.reserveOrder(order);
         Navigation.findNavController(getView()).navigate(R.id.action_ordersFragment_to_restaurantCollectionFragment);
     }
 

@@ -1,5 +1,7 @@
 package com.learntodroid.ubereatsdriver.sharedmodel;
 
+import com.google.firebase.firestore.DocumentId;
+
 import java.util.HashMap;
 
 public class Order {
@@ -8,12 +10,16 @@ public class Order {
     private ShoppingCart cart;
     private String status;
     private HashMap<String, Boolean> notifications;
+    private String driverId;
+
+    @DocumentId
+    private String documentId;
 
     public Order() {
 
     }
 
-    public Order(Restaurant restaurant, UberEatsAccount account, ShoppingCart cart, String status) {
+    public Order(Restaurant restaurant, UberEatsAccount account, ShoppingCart cart, String status, String driverId) {
         this.restaurant = restaurant;
         this.account = account;
         this.cart = cart;
@@ -24,6 +30,7 @@ public class Order {
         this.notifications.put("Awaiting Collection", false);
         this.notifications.put("Delivering", false);
         this.notifications.put("Delivered", false);
+        this.driverId = driverId;
     }
 
     public Restaurant getRestaurant() {
@@ -64,5 +71,17 @@ public class Order {
 
     public void setNotifications(HashMap<String, Boolean> notifications) {
         this.notifications = notifications;
+    }
+
+    public String getDriverId() {
+        return driverId;
+    }
+
+    public void setDriverId(String driverId) {
+        this.driverId = driverId;
+    }
+
+    public String getDocumentId() {
+        return documentId;
     }
 }

@@ -39,7 +39,6 @@ public class UberEatsDriverRepository {
     private FirebaseFirestore db;
 
     private MutableLiveData<List<Order>> ordersLiveData;
-    private MutableLiveData<List<String>> orderIdsLiveData;
 
     private MutableLiveData<Order> selectedOrderLiveData;
 
@@ -48,7 +47,6 @@ public class UberEatsDriverRepository {
     private MutableLiveData<DirectionsResult> restaurantDirectionsResultLiveData;
     private MutableLiveData<DirectionsResult> customerDirectionsResultLiveData;
 
-    private MutableLiveData<String> driverIdLiveData;
     private MutableLiveData<Driver> driverLiveData;
 
     public UberEatsDriverRepository() {
@@ -64,7 +62,6 @@ public class UberEatsDriverRepository {
 //        this.restaurantsLiveData = new MutableLiveData<>();
 //        this.selectedRestaurantLiveData = new MutableLiveData<>();
         this.ordersLiveData = new MutableLiveData<>();
-        this.orderIdsLiveData = new MutableLiveData<>();
         this.selectedOrderLiveData = new MutableLiveData<>();
 
         this.restaurantDriverLocationLiveData = new MutableLiveData<>();
@@ -72,7 +69,6 @@ public class UberEatsDriverRepository {
         this.restaurantDirectionsResultLiveData = new MutableLiveData<>();
         this.customerDirectionsResultLiveData = new MutableLiveData<>();
 
-        this.driverIdLiveData = new MutableLiveData<>();
         this.driverLiveData = new MutableLiveData<>();
     }
 
@@ -111,7 +107,6 @@ public class UberEatsDriverRepository {
                     @Override
                     public void onSuccess(DocumentReference documentReference) {
                         Log.d(UberEatsDriverRepository.class.getSimpleName(), "DocumentSnapshot added with ID: " + documentReference.getId());
-                        driverIdLiveData.postValue(documentReference.getId());
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -136,8 +131,6 @@ public class UberEatsDriverRepository {
                             if (task.getResult().getDocuments().size() > 0) {
                                 Driver driver = task.getResult().getDocuments().get(0).toObject(Driver.class);
                                 driverLiveData.postValue(driver);
-                                String driverId = task.getResult().getDocuments().get(0).getId();
-                                driverIdLiveData.setValue(driverId);
                             }
                         } else {
                             Log.i(UberEatsDriverRepository.class.getSimpleName(), "Error getting documents: ", task.getException());
@@ -150,9 +143,7 @@ public class UberEatsDriverRepository {
         driver.setLatitude(latitude);
         driver.setLongitude(longitude);
 
-        String driverId = driverIdLiveData.getValue();
-
-        DocumentReference orderRef = db.collection("drivers").document(driverId);
+        DocumentReference orderRef = db.collection("drivers").document(driver.getDocumentId());
         orderRef
                 .set(driver)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -172,10 +163,8 @@ public class UberEatsDriverRepository {
 
     public void queryOrders(String ordersStatus) {
         final List<Order> orders = new ArrayList<>();
-        final List<String> orderIds = new ArrayList<>();
 
         db.collection("orders")
-//                .whereEqualTo("restaurant.title", "McDonald's")
                 .whereEqualTo("status", ordersStatus)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
@@ -186,10 +175,8 @@ public class UberEatsDriverRepository {
                                 Log.d(UberEatsDriverRepository.class.getSimpleName(), document.getId() + " => " + document.getData());
                                 Order order = document.toObject(Order.class);
                                 orders.add(order);
-                                orderIds.add(document.getId());
                             }
                             ordersLiveData.postValue(orders);
-                            orderIdsLiveData.postValue(orderIds);
                         } else {
                             Log.d(UberEatsDriverRepository.class.getSimpleName(), "Error getting documents: ", task.getException());
                         }
@@ -198,13 +185,11 @@ public class UberEatsDriverRepository {
     }
 
     public void updateOrderStatus(Order order, String newStatus) {
-        int orderIndex = ordersLiveData.getValue().indexOf(order);
-        String orderId = orderIdsLiveData.getValue().get(orderIndex);
         String currentStatus = order.getStatus();
 
         order.setStatus(newStatus);
 
-        DocumentReference orderRef = db.collection("orders").document(orderId);
+        DocumentReference orderRef = db.collection("orders").document(order.getDocumentId());
         orderRef
                 .set(order)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -223,7 +208,10 @@ public class UberEatsDriverRepository {
         queryOrders(currentStatus);
     }
 
-    public void setSelectedOrder(Order order) {
+    public void reserveOrder(Order order) {
+        Driver driver = driverLiveData.getValue();
+        order.setDriverId(driver.getDocumentId());
+        updateOrderStatus(order, "Awaiting Collection");
         selectedOrderLiveData.postValue(order);
     }
 
@@ -320,10 +308,6 @@ public class UberEatsDriverRepository {
 
     public MutableLiveData<DirectionsResult> getCustomerDirectionsResultLiveData() {
         return customerDirectionsResultLiveData;
-    }
-
-    public MutableLiveData<String> getDriverIdLiveData() {
-        return driverIdLiveData;
     }
 
     public MutableLiveData<Driver> getDriverLiveData() {

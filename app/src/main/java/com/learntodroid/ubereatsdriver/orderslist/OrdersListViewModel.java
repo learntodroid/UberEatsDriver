@@ -25,8 +25,8 @@ public class OrdersListViewModel extends ViewModel {
         uberEatsDriverRepository.updateOrderStatus(order, newStatus);
     }
 
-    public void setSelectedOrder(Order order) {
-        uberEatsDriverRepository.setSelectedOrder(order);
+    public void reserveOrder(Order order) {
+        uberEatsDriverRepository.reserveOrder(order);
     }
 
     public MutableLiveData<List<Order>> getOrdersLiveData() {

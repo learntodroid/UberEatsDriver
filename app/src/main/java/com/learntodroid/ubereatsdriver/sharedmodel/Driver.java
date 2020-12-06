@@ -1,10 +1,15 @@
 package com.learntodroid.ubereatsdriver.sharedmodel;
 
+import com.google.firebase.firestore.DocumentId;
+
 public class Driver {
     private String name;
     private String userId;
     private double latitude;
     private double longitude;
+
+    @DocumentId
+    private String documentId;
 
     public Driver() {
     }
@@ -46,5 +51,9 @@ public class Driver {
 
     public void setLongitude(double longitude) {
         this.longitude = longitude;
+    }
+
+    public String getDocumentId() {
+        return documentId;
     }
 }

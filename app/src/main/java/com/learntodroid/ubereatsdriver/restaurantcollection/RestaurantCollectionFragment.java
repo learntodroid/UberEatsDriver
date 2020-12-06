@@ -123,7 +123,7 @@ public class RestaurantCollectionFragment extends Fragment implements OnMapReady
 
                     orderStatusTextView.setText(String.format("Order %s", order.getStatus().toLowerCase()));
                     orderDateTimeTextView.setText(String.format("Order Placed: %s", "XX/XX/XXXX XX:XX XX"));
-                    orderIdTextView.setText(String.format("Order Id: %s", "ORDER_ID"));
+                    orderIdTextView.setText(String.format("Order Id: %s", order.getDocumentId()));
                     orderUserIdTextView.setText(String.format("User Id: %s", order.getAccount().getUserId()));
                     orderTotalPrice.setText(String.format("Total: %s", NumberFormat.getCurrencyInstance().format(order.getCart().calculatePrices().get(3).getPrice())));
 
